@@ -22,23 +22,24 @@ function connectLive(onState, onStatus, intervalMs = 2000) {
   return { refresh: tick, stop: () => clearInterval(timer) };
 }
 
-// Parola de administrare: ceruta o singura data, tinuta in browser.
+// Parola de administrare: tinuta doar cat e deschis tab-ul (sessionStorage).
 const ADMIN_KEY = "adminPassword";
 function adminHeaders() {
   let pw = null;
-  try { pw = localStorage.getItem(ADMIN_KEY); } catch {}
+  try { pw = sessionStorage.getItem(ADMIN_KEY); } catch {}
   return pw ? { "x-admin-password": pw } : {};
 }
+function forgetAdminPassword() {
+  try { sessionStorage.removeItem(ADMIN_KEY); } catch {}
+}
 
-async function ensureAdminPassword() {
-  for (;;) {
-    const res = await fetch("/api/auth", { headers: adminHeaders(), cache: "no-store" });
-    if (res.ok) return;
-    if (res.status !== 401) throw new Error(`Eroare ${res.status}`);
-    const pw = prompt("Parola de administrare:");
-    if (pw === null) throw new Error("Fără parolă nu se pot salva modificări.");
-    try { localStorage.setItem(ADMIN_KEY, pw); } catch {}
-  }
+// Verifica parola curenta (sau pe cea data). Returneaza true daca e corecta sau nu e nevoie de parola.
+async function checkAdminPassword(pw) {
+  if (pw !== undefined) { try { sessionStorage.setItem(ADMIN_KEY, pw); } catch {} }
+  const res = await fetch("/api/auth", { headers: adminHeaders(), cache: "no-store" });
+  if (res.ok) return true;
+  if (res.status === 401) { forgetAdminPassword(); return false; }
+  throw new Error(`Eroare ${res.status}`);
 }
 
 async function saveState(state) {
@@ -48,9 +49,8 @@ async function saveState(state) {
     body: JSON.stringify(state),
   });
   if (res.status === 401) {
-    try { localStorage.removeItem(ADMIN_KEY); } catch {}
-    await ensureAdminPassword();
-    return saveState(state);
+    forgetAdminPassword();
+    throw new Error("Parolă lipsă sau greșită. Reîncarcă pagina și autentifică-te.");
   }
   const body = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(body.error || `Eroare ${res.status}`);

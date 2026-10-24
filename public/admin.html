@@ -52,14 +52,33 @@
   .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1b2540; border: 1px solid var(--line); padding: 10px 16px; border-radius: 10px; font-size: 14px; display: none; }
   .toast.show { display: block; }
   .toast.err { border-color: var(--err); color: #fca5a5; }
+  body.locked main, body.locked header .status, body.locked #lockBtn { display: none; }
+  .lock { position: fixed; inset: 0; display: none; place-items: center; background: var(--bg); z-index: 5; }
+  body.locked .lock { display: grid; }
+  .lock form { width: min(360px, 90vw); background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 24px; display: grid; gap: 12px; }
+  .lock h2 { margin: 0; font-size: 18px; }
+  .lock input[type=password] { width: 100%; background: #0b1020; color: var(--text); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; font-size: 16px; }
+  .lock button { padding: 10px; font-weight: 600; border-color: var(--a); }
+  .lock .msg { min-height: 16px; }
 </style>
 </head>
-<body>
+<body class="locked">
 <header>
   <h1>Administrare turneu</h1>
   <div class="status" id="status">Se conectează…</div>
-  <a href="/" target="_blank">Deschide ecranul TV ↗</a>
+  <div style="display:flex;gap:12px;align-items:center">
+    <button id="lockBtn" title="Cere parola din nou">Blochează</button>
+    <a href="/" target="_blank">Deschide ecranul TV ↗</a>
+  </div>
 </header>
+<div class="lock">
+  <form id="lockForm">
+    <h2>Administrare turneu</h2>
+    <input type="password" id="pw" placeholder="Parola de administrare" autocomplete="current-password" autofocus />
+    <button type="submit">Intră</button>
+    <div class="msg" id="pwMsg"></div>
+  </form>
+</div>
 
 <main>
   <section>
@@ -285,12 +304,32 @@
     state = T.defaultState(); commit(); render();
   };
 
-  live = connectLive(onServerState, (online) => {
-    const el = $("status");
-    el.textContent = online ? "Conectat · sincronizare live" : "Fără conexiune la server";
-    el.className = "status" + (online ? "" : " err");
+  function unlock() {
+    document.body.classList.remove("locked");
+    live = connectLive(onServerState, (online) => {
+      const el = $("status");
+      el.textContent = online ? "Conectat · sincronizare live" : "Fără conexiune la server";
+      el.className = "status" + (online ? "" : " err");
+    });
+  }
+  function lock() {
+    forgetAdminPassword();
+    if (live) live.stop();
+    live = null; state = null; pending = null;
+    document.body.classList.add("locked");
+    $("pw").value = ""; $("pw").focus();
+  }
+  $("lockForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    $("pwMsg").textContent = "";
+    try {
+      if (await checkAdminPassword($("pw").value)) unlock();
+      else $("pwMsg").textContent = "Parolă greșită.";
+    } catch (err) { $("pwMsg").textContent = err.message; }
   });
-  ensureAdminPassword().catch((e) => toast(e.message, true));
+  $("lockBtn").onclick = lock;
+  // Parola ramasa in tab (dupa reincarcare) sau lipsa parolei pe server deblocheaza direct.
+  checkAdminPassword().then((ok) => (ok ? unlock() : $("pw").focus())).catch((err) => ($("pwMsg").textContent = err.message));
 </script>
 </body>
 </html>
