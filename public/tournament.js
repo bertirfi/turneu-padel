@@ -98,8 +98,12 @@
     return m.s1 > m.s2 ? 0 : 1;
   }
 
-  // Clasamentul unei grupe. Criteriul unic: numarul de victorii.
-  // Egalitatile NU se departajeaza automat; se marcheaza `tied` si se pot ordona manual.
+  // Clasamentul unei grupe. Criterii: 1) victorii, 2) game-averaj (game-uri castigate minus pierdute).
+  // Egalitate la ambele NU se departajeaza automat: se marcheaza `tied` si se poate ordona manual.
+  function sameRank(x, y) {
+    return x.wins === y.wins && x.diff === y.diff;
+  }
+
   function standings(state, g) {
     const rows = state.teams[g].map((team, idx) => ({
       idx,
@@ -129,15 +133,13 @@
         h.losses++;
       }
     }
+    for (const r of rows) r.diff = r.gamesWon - r.gamesLost;
     const manual = state.manualOrder[g];
     const rank = (r) => (manual ? manual.indexOf(r.idx) : r.idx);
-    rows.sort((x, y) => y.wins - x.wins || rank(x) - rank(y));
+    rows.sort((x, y) => y.wins - x.wins || y.diff - x.diff || rank(x) - rank(y));
     // Marcheaza egalitatile ramase (fara ordine manuala).
     if (!manual) {
-      for (let i = 0; i < rows.length; i++) {
-        const same = rows.filter((r) => r.wins === rows[i].wins);
-        if (same.length > 1) rows[i].tied = true;
-      }
+      for (const r of rows) r.tied = rows.some((o) => o !== r && sameRank(o, r));
     }
     return rows;
   }
@@ -205,6 +207,7 @@
     defaultState,
     validateState,
     standings,
+    sameRank,
     groupComplete,
     groupFinal,
     bracket,

@@ -235,21 +235,21 @@
       const hasTie = rows.some((r) => r.tied);
       const col = document.createElement("div");
       col.innerHTML = `<h3 class="g${g.toLowerCase()}">Grupa ${g}</h3>` +
-        (complete && hasTie ? `<div class="warn">Egalitate la victorii. Stabilește manual ordinea cu săgețile; semifinalele se completează după ce locurile 1–2 sunt clare.</div>` : "") +
+        (complete && hasTie ? `<div class="warn">Egalitate la victorii și la game-averaj. Stabilește manual ordinea cu săgețile; semifinalele se completează după ce locurile 1–2 sunt clare.</div>` : "") +
         (manual ? `<div class="note" style="margin-bottom:8px">Ordine manuală activă. <button id="clear-${g}">Revino la ordinea automată</button></div>` : "");
       const table = document.createElement("table");
-      table.innerHTML = `<thead><tr><th>#</th><th>Echipă</th><th class="num">M</th><th class="num">V</th><th class="num">Î</th><th class="num">Game-uri</th><th></th></tr></thead>`;
+      table.innerHTML = `<thead><tr><th>#</th><th>Echipă</th><th class="num">M</th><th class="num">V</th><th class="num">Î</th><th class="num">Game-uri</th><th class="num">+/−</th><th></th></tr></thead>`;
       const tbody = document.createElement("tbody");
       rows.forEach((r, i) => {
         const tr = document.createElement("tr");
         tr.innerHTML = `<td>${i + 1}</td><td>${escapeHtml(r.team.name)}${r.tied && complete ? '<span class="tie">EGAL</span>' : ""}</td>
-          <td class="num">${r.played}</td><td class="num">${r.wins}</td><td class="num">${r.losses}</td><td class="num">${r.gamesWon}–${r.gamesLost}</td><td></td>`;
+          <td class="num">${r.played}</td><td class="num">${r.wins}</td><td class="num">${r.losses}</td><td class="num">${r.gamesWon}–${r.gamesLost}</td><td class="num"><strong>${r.diff > 0 ? "+" : ""}${r.diff}</strong></td><td></td>`;
         const cell = tr.lastElementChild;
         const up = document.createElement("button"); up.textContent = "▲"; up.title = "Mută mai sus";
         const down = document.createElement("button"); down.textContent = "▼"; down.title = "Mută mai jos";
-        // Se pot muta doar echipe cu acelasi numar de victorii (nu inventam reguli de departajare).
-        up.disabled = !(i > 0 && rows[i - 1].wins === r.wins);
-        down.disabled = !(i < rows.length - 1 && rows[i + 1].wins === r.wins);
+        // Se pot muta doar echipe egale la victorii si la game-averaj (nu inventam alte criterii).
+        up.disabled = !(i > 0 && T.sameRank(rows[i - 1], r));
+        down.disabled = !(i < rows.length - 1 && T.sameRank(rows[i + 1], r));
         const swap = (j) => { const order = rows.map((x) => x.idx); [order[i], order[j]] = [order[j], order[i]]; state.manualOrder[g] = order; commit(); render(); };
         up.onclick = () => swap(i - 1); down.onclick = () => swap(i + 1);
         cell.append(up, " ", down);

@@ -72,6 +72,7 @@
   td.team .name { font-size: 1.35vw; font-weight: 800; line-height: 1.15; }
   td.team .players { font-size: 0.95vw; color: var(--muted); font-weight: 600; margin-top: 0.2vw; }
   td.muted { color: var(--muted); }
+  td.diff.pos { color: var(--win); } td.diff.neg { color: #f87171; }
   .tie { display: inline-block; margin-left: 0.6vw; font-size: 0.75vw; padding: 0.15vw 0.5vw; border-radius: 999px; background: rgba(251,191,36,0.18); color: var(--b); vertical-align: middle; letter-spacing: 0.06em; }
 
   .matches { padding: 0.8vw 1.3vw 1vw; margin-top: auto; display: grid; grid-template-columns: 1fr; gap: 0.45vw; }
@@ -143,7 +144,7 @@
     const complete = T.groupComplete(state, g);
     const final = T.groupFinal(state, g);
     const playedCount = state.matches[g].filter(T.played).length;
-    const status = final ? "Clasament final" : complete ? "Egalitate – ordine de stabilit" : `${playedCount} / ${state.matches[g].length} meciuri`;
+    const status = final ? "Clasament final" : complete ? "Egalitate – ordine de stabilit manual" : `${playedCount} / ${state.matches[g].length} meciuri`;
     const tbody = rows.map((r, i) => `
       <tr class="${final && i < 2 ? "qualified" : ""}">
         <td class="pos"><span>${i + 1}</span></td>
@@ -153,6 +154,7 @@
         <td class="muted">${r.losses}</td>
         <td>${r.wins}–${r.losses}</td>
         <td class="muted">${r.gamesWon}–${r.gamesLost}</td>
+        <td class="diff ${r.diff > 0 ? "pos" : r.diff < 0 ? "neg" : ""}">${r.diff > 0 ? "+" : ""}${r.diff}</td>
       </tr>`).join("");
     const matches = state.matches[g].map((m, i) => {
       const a = state.teams[g][m.home], b = state.teams[g][m.away];
@@ -166,7 +168,7 @@
     document.getElementById("group-" + g).innerHTML = `
       <div class="panel-head"><h2><span class="dot"></span>GRUPA ${g}</h2><span class="status">${status}</span></div>
       <table>
-        <thead><tr><th>#</th><th class="team">Echipă</th><th>M</th><th>V</th><th>Î</th><th>Seturi</th><th>Game-uri</th></tr></thead>
+        <thead><tr><th>#</th><th class="team">Echipă</th><th>M</th><th>V</th><th>Î</th><th>Seturi</th><th>Game-uri</th><th>+/−</th></tr></thead>
         <tbody>${tbody}</tbody>
       </table>
       <div class="matches"><h3>Meciuri</h3>${matches}</div>`;
