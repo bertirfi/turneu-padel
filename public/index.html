@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Tablou turneu</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #070b14;
+    --panel: #0f1626;
+    --panel-2: #141d31;
+    --line: rgba(255, 255, 255, 0.08);
+    --text: #f3f6fb;
+    --muted: #8b97ad;
+    --a: #22d3ee;
+    --a-dim: rgba(34, 211, 238, 0.14);
+    --b: #fbbf24;
+    --b-dim: rgba(251, 191, 36, 0.14);
+    --gold: #ffd166;
+    --win: #34d399;
+    --radius: 1vw;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--text);
+    font-family: "Sora", "Segoe UI", system-ui, sans-serif; font-weight: 500; }
+  body {
+    background:
+      radial-gradient(60vw 40vh at 15% 0%, rgba(34, 211, 238, 0.10), transparent 60%),
+      radial-gradient(60vw 40vh at 85% 0%, rgba(251, 191, 36, 0.10), transparent 60%),
+      var(--bg);
+  }
+  .screen { display: grid; grid-template-rows: 7.5vh 1fr; height: 100vh; padding: 1.4vw 1.8vw 1.6vw; gap: 1.2vw; }
+
+  header { display: flex; align-items: center; justify-content: space-between; }
+  .club { display: flex; align-items: center; gap: 1vw; }
+  .club .mark { width: 2.6vw; height: 2.6vw; border-radius: 0.7vw; background: linear-gradient(135deg, var(--a), var(--b)); }
+  .club h1 { font-size: 1.9vw; font-weight: 800; letter-spacing: 0.08em; }
+  .club small { display: block; font-size: 1vw; color: var(--muted); font-weight: 600; letter-spacing: 0.06em; }
+  .phase { font-size: 1.1vw; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted);
+    border: 1px solid var(--line); padding: 0.6vw 1.2vw; border-radius: 999px; background: rgba(255,255,255,0.03); }
+  .phase.live { color: var(--win); border-color: rgba(52, 211, 153, 0.4); }
+  .phase.live::before { content: ""; display: inline-block; width: 0.6vw; height: 0.6vw; border-radius: 50%; background: var(--win);
+    margin-right: 0.6vw; box-shadow: 0 0 0 0 rgba(52,211,153,0.6); animation: pulse 1.8s infinite; }
+  @keyframes pulse { 70% { box-shadow: 0 0 0 0.6vw rgba(52,211,153,0); } 100% { box-shadow: 0 0 0 0 rgba(52,211,153,0); } }
+
+  main { display: grid; grid-template-columns: 1fr 1fr 0.78fr; gap: 1.2vw; min-height: 0; }
+
+  .panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); display: flex; flex-direction: column;
+    min-height: 0; overflow: hidden; }
+  .panel-head { display: flex; align-items: center; justify-content: space-between; padding: 1vw 1.3vw; border-bottom: 1px solid var(--line); }
+  .panel-head h2 { font-size: 1.5vw; font-weight: 800; letter-spacing: 0.04em; display: flex; align-items: center; gap: 0.7vw; }
+  .panel-head h2 .dot { width: 1vw; height: 1vw; border-radius: 0.3vw; }
+  .panel-head .status { font-size: 0.9vw; color: var(--muted); font-weight: 600; }
+  .group-a .panel-head { background: linear-gradient(90deg, var(--a-dim), transparent); }
+  .group-b .panel-head { background: linear-gradient(90deg, var(--b-dim), transparent); }
+  .group-a .dot { background: var(--a); } .group-b .dot { background: var(--b); }
+  .group-a .accent { color: var(--a); } .group-b .accent { color: var(--b); }
+
+  table { width: 100%; border-collapse: collapse; }
+  thead th { font-size: 0.85vw; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
+    padding: 0.7vw 0.6vw; text-align: center; border-bottom: 1px solid var(--line); }
+  thead th.team { text-align: left; padding-left: 1.3vw; }
+  tbody td { padding: 0.75vw 0.6vw; text-align: center; font-size: 1.35vw; font-weight: 700; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+  tbody tr:last-child td { border-bottom: 0; }
+  td.pos { width: 3.4vw; }
+  td.pos span { display: inline-grid; place-items: center; width: 2.3vw; height: 2.3vw; border-radius: 0.6vw; background: var(--panel-2); font-size: 1.15vw; }
+  tr.qualified td.pos span { color: #0a0f1c; }
+  .group-a tr.qualified td.pos span { background: var(--a); } .group-b tr.qualified td.pos span { background: var(--b); }
+  td.team { text-align: left; padding-left: 1.3vw; }
+  td.team .name { font-size: 1.35vw; font-weight: 800; line-height: 1.15; }
+  td.team .players { font-size: 0.95vw; color: var(--muted); font-weight: 600; margin-top: 0.2vw; }
+  td.muted { color: var(--muted); }
+  .tie { display: inline-block; margin-left: 0.6vw; font-size: 0.75vw; padding: 0.15vw 0.5vw; border-radius: 999px; background: rgba(251,191,36,0.18); color: var(--b); vertical-align: middle; letter-spacing: 0.06em; }
+
+  .matches { padding: 0.8vw 1.3vw 1vw; margin-top: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 0.5vw 1.2vw; }
+  .matches h3 { grid-column: 1 / -1; font-size: 0.85vw; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.2vw; }
+  .match { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 0.6vw; padding: 0.55vw 0.8vw; border-radius: 0.6vw; background: var(--panel-2); font-size: 1vw; font-weight: 600; }
+  .match .t { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--muted); }
+  .match .t.r { text-align: right; }
+  .match .t.w { color: var(--text); font-weight: 800; }
+  .match .s { font-variant-numeric: tabular-nums; font-weight: 800; font-size: 1.15vw; min-width: 3.6vw; text-align: center; padding: 0.15vw 0.5vw; border-radius: 0.4vw; background: rgba(255,255,255,0.05); }
+  .match .s.todo { color: var(--muted); font-size: 0.85vw; letter-spacing: 0.06em; }
+
+  .bracket { display: grid; grid-template-rows: auto 1fr; }
+  .bracket-body { display: flex; flex-direction: column; gap: 1vw; padding: 1.1vw 1.3vw; min-height: 0; }
+  .stage-label { font-size: 0.85vw; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; display: flex; justify-content: space-between; }
+  .tie-card { background: var(--panel-2); border: 1px solid var(--line); border-radius: 0.8vw; overflow: hidden; }
+  .tie-row { display: grid; grid-template-columns: 0.5vw 1fr auto; align-items: center; gap: 0.9vw; padding: 0.8vw 1vw 0.8vw 0; }
+  .tie-row + .tie-row { border-top: 1px solid var(--line); }
+  .tie-row .bar { height: 100%; min-height: 3vw; }
+  .tie-row.ga .bar { background: var(--a); } .tie-row.gb .bar { background: var(--b); } .tie-row.tbd .bar { background: var(--line); }
+  .tie-row .name { font-size: 1.25vw; font-weight: 800; line-height: 1.1; }
+  .tie-row .sub { font-size: 0.85vw; color: var(--muted); font-weight: 600; margin-top: 0.15vw; }
+  .tie-row.tbd .name { color: var(--muted); font-weight: 700; }
+  .tie-row .score { font-size: 1.7vw; font-weight: 800; font-variant-numeric: tabular-nums; min-width: 2.2vw; text-align: center; color: var(--muted); }
+  .tie-row.winner .score { color: var(--win); }
+  .tie-row.winner .name { color: var(--text); }
+  .tie-row.loser .name, .tie-row.loser .sub { opacity: 0.55; }
+  .final .tie-row .name { font-size: 1.45vw; }
+  .final .tie-row .score { font-size: 2vw; }
+
+  .champion { margin-top: auto; border-radius: 0.9vw; padding: 1.2vw 1.3vw; text-align: center;
+    background: linear-gradient(160deg, rgba(255, 209, 102, 0.22), rgba(255, 209, 102, 0.04)); border: 1px solid rgba(255, 209, 102, 0.45);
+    box-shadow: 0 0 4vw rgba(255, 209, 102, 0.15) inset; }
+  .champion .lbl { font-size: 0.9vw; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold); font-weight: 800; }
+  .champion .trophy { font-size: 3vw; line-height: 1; margin: 0.4vw 0; }
+  .champion .name { font-size: 2vw; font-weight: 800; }
+  .champion .players { font-size: 1.1vw; color: var(--text); opacity: 0.85; margin-top: 0.3vw; font-weight: 600; }
+  .champion.pending { background: var(--panel-2); border-color: var(--line); box-shadow: none; }
+  .champion.pending .lbl, .champion.pending .name { color: var(--muted); }
+  .champion.pending .name { font-size: 1.2vw; font-weight: 700; }
+
+  .offline { position: fixed; top: 1vw; right: 1.8vw; font-size: 0.9vw; color: #fca5a5; background: rgba(248,113,113,0.15); border: 1px solid rgba(248,113,113,0.4);
+    padding: 0.4vw 0.9vw; border-radius: 999px; display: none; }
+  .offline.show { display: block; }
+</style>
+</head>
+<body>
+<div class="screen">
+  <header>
+    <div class="club"><div class="mark"></div><div><h1 id="club"></h1><small id="title"></small></div></div>
+    <div class="phase" id="phase"></div>
+  </header>
+  <main>
+    <section class="panel group-a" id="group-A"></section>
+    <section class="panel group-b" id="group-B"></section>
+    <section class="panel bracket" id="bracket"></section>
+  </main>
+</div>
+<div class="offline" id="offline">Fără conexiune la server, se reîncearcă…</div>
+
+<script src="/tournament.js"></script>
+<script src="/common.js"></script>
+<script>
+  const T = Tournament;
+
+  function players(t) { return `${escapeHtml(t.p1)} · ${escapeHtml(t.p2)}`; }
+
+  function renderGroup(state, g) {
+    const rows = T.standings(state, g);
+    const complete = T.groupComplete(state, g);
+    const final = T.groupFinal(state, g);
+    const playedCount = state.matches[g].filter(T.played).length;
+    const status = final ? "Clasament final" : complete ? "Egalitate – ordine de stabilit" : `${playedCount} / ${state.matches[g].length} meciuri`;
+    const tbody = rows.map((r, i) => `
+      <tr class="${final && i < 2 ? "qualified" : ""}">
+        <td class="pos"><span>${i + 1}</span></td>
+        <td class="team"><div class="name">${escapeHtml(r.team.name)}${r.tied && complete ? '<span class="tie">EGAL</span>' : ""}</div><div class="players">${players(r.team)}</div></td>
+        <td class="muted">${r.played}</td>
+        <td class="accent">${r.wins}</td>
+        <td class="muted">${r.losses}</td>
+        <td>${r.wins}–${r.losses}</td>
+        <td class="muted">${r.gamesWon}–${r.gamesLost}</td>
+      </tr>`).join("");
+    const matches = state.matches[g].map((m, i) => {
+      const a = state.teams[g][m.home], b = state.teams[g][m.away];
+      const w = T.winnerIndex(m);
+      return `<div class="match">
+        <span class="t r ${w === 0 ? "w" : ""}">${escapeHtml(a.name)}</span>
+        <span class="s ${w === null ? "todo" : ""}">${w === null ? "M" + (i + 1) : `${m.s1} – ${m.s2}`}</span>
+        <span class="t ${w === 1 ? "w" : ""}">${escapeHtml(b.name)}</span>
+      </div>`;
+    }).join("");
+    document.getElementById("group-" + g).innerHTML = `
+      <div class="panel-head"><h2><span class="dot"></span>GRUPA ${g}</h2><span class="status">${status}</span></div>
+      <table>
+        <thead><tr><th>#</th><th class="team">Echipă</th><th>M</th><th>V</th><th>Î</th><th>Seturi</th><th>Game-uri</th></tr></thead>
+        <tbody>${tbody}</tbody>
+      </table>
+      <div class="matches"><h3>Meciuri</h3>${matches}</div>`;
+  }
+
+  function tieRow(state, slot, placeholder, score, side, decided) {
+    const team = T.teamOf(state, slot);
+    const w = decided ? T.winnerIndex(score) : null;
+    const cls = !team ? "tbd" : slot.group === "A" ? "ga" : "gb";
+    const outcome = w === null ? "" : w === side ? "winner" : "loser";
+    const s = side === 0 ? score.s1 : score.s2;
+    return `<div class="tie-row ${cls} ${outcome}">
+      <div class="bar"></div>
+      <div><div class="name">${team ? escapeHtml(team.name) : placeholder}</div><div class="sub">${team ? players(team) : "se stabilește după grupe"}</div></div>
+      <div class="score">${s === null || s === undefined ? "–" : s}</div>
+    </div>`;
+  }
+
+  function renderBracket(state) {
+    const br = T.bracket(state);
+    const sfHtml = br.semis.map((sf, i) => {
+      const ready = sf.slots[0] && sf.slots[1];
+      const ph = i === 0 ? ["Locul 1 · Grupa A", "Locul 2 · Grupa B"] : ["Locul 1 · Grupa B", "Locul 2 · Grupa A"];
+      return `<div>
+        <div class="stage-label"><span>Semifinala ${i + 1}</span><span>${ready ? (T.played(sf.score) ? "Încheiată" : "Programată") : "În așteptare"}</span></div>
+        <div class="tie-card">${tieRow(state, sf.slots[0], ph[0], sf.score, 0, ready)}${tieRow(state, sf.slots[1], ph[1], sf.score, 1, ready)}</div>
+      </div>`;
+    }).join("");
+    const fReady = br.final.slots[0] && br.final.slots[1];
+    const finalHtml = `<div class="final">
+      <div class="stage-label"><span>Finala</span><span>${fReady ? (T.played(br.final.score) ? "Încheiată" : "Programată") : "În așteptare"}</span></div>
+      <div class="tie-card">${tieRow(state, br.final.slots[0], "Câștigătoarea SF1", br.final.score, 0, fReady)}${tieRow(state, br.final.slots[1], "Câștigătoarea SF2", br.final.score, 1, fReady)}</div>
+    </div>`;
+    const ch = T.teamOf(state, br.champion);
+    const champHtml = ch
+      ? `<div class="champion"><div class="lbl">Campioni</div><div class="trophy">🏆</div><div class="name">${escapeHtml(ch.name)}</div><div class="players">${players(ch)}</div></div>`
+      : `<div class="champion pending"><div class="lbl">Campioni</div><div class="name">Se decide în finală</div></div>`;
+    document.getElementById("bracket").innerHTML = `
+      <div class="panel-head"><h2>FAZA ELIMINATORIE</h2></div>
+      <div class="bracket-body">${sfHtml}${finalHtml}${champHtml}</div>`;
+  }
+
+  function phaseOf(state) {
+    const br = T.bracket(state);
+    if (br.champion) return ["Turneu încheiat", false];
+    if (br.final.slots[0] && br.final.slots[1]) return ["Finala", true];
+    if (T.GROUPS.every((g) => T.groupFinal(state, g))) return ["Semifinale", true];
+    const any = T.GROUPS.some((g) => state.matches[g].some(T.played));
+    return [any ? "Faza grupelor" : "Program", any];
+  }
+
+  function render(state) {
+    document.getElementById("club").textContent = state.clubName;
+    document.getElementById("title").textContent = state.title;
+    const [phase, live] = phaseOf(state);
+    const el = document.getElementById("phase");
+    el.textContent = phase;
+    el.className = "phase" + (live ? " live" : "");
+    for (const g of T.GROUPS) renderGroup(state, g);
+    renderBracket(state);
+  }
+
+  connectLive(render, (online) => document.getElementById("offline").classList.toggle("show", !online));
+</script>
+</body>
+</html>

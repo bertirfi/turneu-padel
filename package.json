@@ -1,0 +1,11 @@
+{
+  "name": "turneu-padel",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Tablou live pentru turneu de padel: 8 echipe, 2 grupe, semifinale, finala. Ecran TV + panou de administrare.",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node test.js"
+  },
+  "engines": { "node": ">=20" }
+}

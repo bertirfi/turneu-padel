@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Administrare turneu</title>
+<style>
+  :root { --bg: #0b1020; --panel: #121a2e; --line: rgba(255,255,255,0.1); --text: #eef2f8; --muted: #8e9ab3; --a: #22d3ee; --b: #fbbf24; --ok: #34d399; --err: #f87171; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: "Segoe UI", system-ui, sans-serif; font-size: 15px; }
+  header { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 20px; background: rgba(11,16,32,0.92); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
+  header h1 { font-size: 18px; margin: 0; }
+  header a { color: var(--a); text-decoration: none; font-weight: 600; }
+  .status { font-size: 13px; color: var(--muted); }
+  .status.err { color: var(--err); }
+  main { max-width: 1100px; margin: 0 auto; padding: 20px; display: grid; gap: 20px; }
+  section { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; }
+  section h2 { margin: 0 0 14px; font-size: 16px; display: flex; align-items: center; gap: 8px; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 820px) { .two { grid-template-columns: 1fr; } }
+  h3 { margin: 0 0 10px; font-size: 14px; letter-spacing: 0.08em; text-transform: uppercase; }
+  h3.ga { color: var(--a); } h3.gb { color: var(--b); }
+  input[type=text], input[type=number] { width: 100%; background: #0b1020; color: var(--text); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font-size: 15px; }
+  input:focus { outline: none; border-color: var(--a); }
+  input[type=number] { width: 64px; text-align: center; font-weight: 700; font-size: 18px; -moz-appearance: textfield; }
+  input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; }
+  input:disabled { opacity: 0.4; }
+  .team-row { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+  .match-row { display: grid; grid-template-columns: 24px 1fr 64px 16px 64px 1fr; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .match-row .n { color: var(--muted); font-size: 13px; }
+  .match-row .t { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; }
+  .match-row .t.r { text-align: right; }
+  .match-row .t.tbd { color: var(--muted); font-weight: 500; }
+  .match-row .sep { text-align: center; color: var(--muted); }
+  .match-row.bad input { border-color: var(--err); }
+  .msg { font-size: 13px; color: var(--err); min-height: 16px; margin-top: 4px; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--line); }
+  th { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+  td.num, th.num { text-align: center; }
+  .tie { display: inline-block; font-size: 11px; padding: 1px 6px; border-radius: 999px; background: rgba(251,191,36,0.2); color: var(--b); margin-left: 6px; }
+  button { background: #1b2540; color: var(--text); border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; cursor: pointer; font-size: 14px; }
+  button:hover { border-color: var(--a); }
+  button:disabled { opacity: 0.35; cursor: default; }
+  button.danger { border-color: rgba(248,113,113,0.5); color: #fca5a5; }
+  button.danger:hover { background: rgba(248,113,113,0.12); }
+  .note { font-size: 13px; color: var(--muted); margin: 6px 0 0; }
+  .warn { background: rgba(251,191,36,0.1); border: 1px solid rgba(251,191,36,0.35); border-radius: 8px; padding: 8px 12px; font-size: 13px; margin-bottom: 10px; }
+  ul.remaining { margin: 0; padding-left: 18px; columns: 2; }
+  ul.remaining li { margin-bottom: 4px; }
+  .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1b2540; border: 1px solid var(--line); padding: 10px 16px; border-radius: 10px; font-size: 14px; display: none; }
+  .toast.show { display: block; }
+  .toast.err { border-color: var(--err); color: #fca5a5; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Administrare turneu</h1>
+  <div class="status" id="status">Se conectează…</div>
+  <a href="/" target="_blank">Deschide ecranul TV ↗</a>
+</header>
+
+<main>
+  <section>
+    <h2>Turneu</h2>
+    <div class="team-row" style="grid-template-columns: 1fr 1fr">
+      <input type="text" id="clubName" placeholder="Numele clubului" />
+      <input type="text" id="title" placeholder="Titlul turneului" />
+    </div>
+  </section>
+
+  <section>
+    <h2>Echipe și jucători</h2>
+    <div class="two" id="teams"></div>
+    <p class="note">Modificările se salvează automat și apar imediat pe TV.</p>
+  </section>
+
+  <section>
+    <h2>Meciuri în grupe</h2>
+    <div class="two" id="groupMatches"></div>
+    <p class="note">Scor într-un singur set (ex. 6 – 4). Pentru a șterge un rezultat, golește ambele câmpuri.</p>
+  </section>
+
+  <section>
+    <h2>Clasamente și ordine manuală</h2>
+    <div class="two" id="standings"></div>
+  </section>
+
+  <section>
+    <h2>Faza eliminatorie</h2>
+    <div id="knockout"></div>
+  </section>
+
+  <section>
+    <h2>Meciuri rămase</h2>
+    <div id="remaining"></div>
+  </section>
+
+  <section>
+    <h2>Ediție nouă</h2>
+    <div class="actions">
+      <button class="danger" id="resetScores">Șterge toate scorurile (păstrează echipele)</button>
+      <button class="danger" id="resetAll">Resetează complet turneul</button>
+    </div>
+  </section>
+</main>
+<div class="toast" id="toast"></div>
+
+<script src="/tournament.js"></script>
+<script src="/common.js"></script>
+<script>
+  const T = Tournament;
+  let state = null;
+  let pending = null; // stare primita de la server in timp ce un camp e in editare
+  let live;
+
+  const $ = (id) => document.getElementById(id);
+  const editing = () => document.activeElement && document.activeElement.tagName === "INPUT";
+
+  function toast(text, isErr) {
+    const el = $("toast");
+    el.textContent = text;
+    el.className = "toast show" + (isErr ? " err" : "");
+    clearTimeout(toast.t);
+    toast.t = setTimeout(() => (el.className = "toast"), isErr ? 5000 : 1800);
+  }
+
+  async function commit() {
+    try {
+      await saveState(state);
+      toast("Salvat");
+      live.refresh();
+    } catch (e) {
+      toast("Eroare la salvare: " + e.message, true);
+    }
+  }
+
+  function onServerState(s) {
+    if (editing()) { pending = s; return; }
+    state = s;
+    render();
+  }
+  document.addEventListener("focusout", () => setTimeout(() => { if (pending && !editing()) { state = pending; pending = null; render(); } }, 50));
+
+  // --- randare ---
+  function textInput(value, onChange, placeholder = "") {
+    const i = document.createElement("input");
+    i.type = "text"; i.value = value; i.placeholder = placeholder;
+    i.addEventListener("change", () => { onChange(i.value.trim() || placeholder); commit(); });
+    return i;
+  }
+
+  function scoreRow(container, n, nameA, nameB, score, onSave, enabled = true) {
+    const row = document.createElement("div");
+    row.className = "match-row";
+    const inA = document.createElement("input"); inA.type = "number"; inA.min = 0; inA.max = 99;
+    const inB = inA.cloneNode();
+    inA.value = score.s1 ?? ""; inB.value = score.s2 ?? "";
+    inA.disabled = inB.disabled = !enabled;
+    const msg = document.createElement("div"); msg.className = "msg";
+    function apply() {
+      const a = inA.value === "" ? null : Number(inA.value);
+      const b = inB.value === "" ? null : Number(inB.value);
+      row.classList.remove("bad"); msg.textContent = "";
+      if ((a === null) !== (b === null)) return; // asteapta al doilea scor
+      if (a !== null && a === b) { row.classList.add("bad"); msg.textContent = "Un set nu se poate termina la egalitate."; return; }
+      onSave(a, b); commit();
+    }
+    inA.addEventListener("change", apply); inB.addEventListener("change", apply);
+    inA.addEventListener("keydown", (e) => { if (e.key === "Enter") inB.focus(); });
+    inB.addEventListener("keydown", (e) => { if (e.key === "Enter") inB.blur(); });
+    const t = (name, cls) => { const s = document.createElement("span"); s.className = "t " + cls + (name ? "" : " tbd"); s.textContent = name || "— de stabilit —"; return s; };
+    const sep = document.createElement("span"); sep.className = "sep"; sep.textContent = "–";
+    const nEl = document.createElement("span"); nEl.className = "n"; nEl.textContent = n;
+    row.append(nEl, t(nameA, "r"), inA, sep, inB, t(nameB, ""));
+    container.append(row, msg);
+  }
+
+  function renderTeams() {
+    const box = $("teams"); box.innerHTML = "";
+    for (const g of T.GROUPS) {
+      const col = document.createElement("div");
+      col.innerHTML = `<h3 class="g${g.toLowerCase()}">Grupa ${g}</h3>`;
+      state.teams[g].forEach((t, i) => {
+        const row = document.createElement("div"); row.className = "team-row";
+        row.append(
+          textInput(t.name, (v) => (t.name = v), `Echipa ${g}${i + 1}`),
+          textInput(t.p1, (v) => (t.p1 = v), "Jucător 1"),
+          textInput(t.p2, (v) => (t.p2 = v), "Jucător 2")
+        );
+        col.append(row);
+      });
+      box.append(col);
+    }
+  }
+
+  function renderGroupMatches() {
+    const box = $("groupMatches"); box.innerHTML = "";
+    for (const g of T.GROUPS) {
+      const col = document.createElement("div");
+      col.innerHTML = `<h3 class="g${g.toLowerCase()}">Grupa ${g}</h3>`;
+      state.matches[g].forEach((m, i) => {
+        scoreRow(col, `M${i + 1}`, state.teams[g][m.home].name, state.teams[g][m.away].name, m, (a, b) => { m.s1 = a; m.s2 = b; });
+      });
+      box.append(col);
+    }
+  }
+
+  function renderStandings() {
+    const box = $("standings"); box.innerHTML = "";
+    for (const g of T.GROUPS) {
+      const rows = T.standings(state, g);
+      const complete = T.groupComplete(state, g);
+      const manual = Boolean(state.manualOrder[g]);
+      const hasTie = rows.some((r) => r.tied);
+      const col = document.createElement("div");
+      col.innerHTML = `<h3 class="g${g.toLowerCase()}">Grupa ${g}</h3>` +
+        (complete && hasTie ? `<div class="warn">Egalitate la victorii. Stabilește manual ordinea cu săgețile; semifinalele se completează după ce locurile 1–2 sunt clare.</div>` : "") +
+        (manual ? `<div class="note" style="margin-bottom:8px">Ordine manuală activă. <button id="clear-${g}">Revino la ordinea automată</button></div>` : "");
+      const table = document.createElement("table");
+      table.innerHTML = `<thead><tr><th>#</th><th>Echipă</th><th class="num">M</th><th class="num">V</th><th class="num">Î</th><th class="num">Game-uri</th><th></th></tr></thead>`;
+      const tbody = document.createElement("tbody");
+      rows.forEach((r, i) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td>${i + 1}</td><td>${escapeHtml(r.team.name)}${r.tied && complete ? '<span class="tie">EGAL</span>' : ""}</td>
+          <td class="num">${r.played}</td><td class="num">${r.wins}</td><td class="num">${r.losses}</td><td class="num">${r.gamesWon}–${r.gamesLost}</td><td></td>`;
+        const cell = tr.lastElementChild;
+        const up = document.createElement("button"); up.textContent = "▲"; up.title = "Mută mai sus";
+        const down = document.createElement("button"); down.textContent = "▼"; down.title = "Mută mai jos";
+        // Se pot muta doar echipe cu acelasi numar de victorii (nu inventam reguli de departajare).
+        up.disabled = !(i > 0 && rows[i - 1].wins === r.wins);
+        down.disabled = !(i < rows.length - 1 && rows[i + 1].wins === r.wins);
+        const swap = (j) => { const order = rows.map((x) => x.idx); [order[i], order[j]] = [order[j], order[i]]; state.manualOrder[g] = order; commit(); render(); };
+        up.onclick = () => swap(i - 1); down.onclick = () => swap(i + 1);
+        cell.append(up, " ", down);
+        tbody.append(tr);
+      });
+      table.append(tbody); col.append(table); box.append(col);
+      const clear = col.querySelector(`#clear-${g}`);
+      if (clear) clear.onclick = () => { state.manualOrder[g] = null; commit(); render(); };
+    }
+  }
+
+  function renderKnockout() {
+    const box = $("knockout"); box.innerHTML = "";
+    const br = T.bracket(state);
+    const name = (slot) => { const t = T.teamOf(state, slot); return t ? t.name : ""; };
+    br.semis.forEach((sf, i) => {
+      const ready = Boolean(sf.slots[0] && sf.slots[1]);
+      scoreRow(box, `SF${i + 1}`, name(sf.slots[0]) || (i === 0 ? "Locul 1 Grupa A" : "Locul 1 Grupa B"), name(sf.slots[1]) || (i === 0 ? "Locul 2 Grupa B" : "Locul 2 Grupa A"), state.semis[i], (a, b) => { state.semis[i].s1 = a; state.semis[i].s2 = b; }, ready);
+    });
+    const fReady = Boolean(br.final.slots[0] && br.final.slots[1]);
+    scoreRow(box, "F", name(br.final.slots[0]) || "Câștigătoarea SF1", name(br.final.slots[1]) || "Câștigătoarea SF2", state.final, (a, b) => { state.final.s1 = a; state.final.s2 = b; }, fReady);
+    const ch = T.teamOf(state, br.champion);
+    const p = document.createElement("p"); p.className = "note";
+    p.textContent = ch ? `🏆 Campioni: ${ch.name} (${ch.p1} · ${ch.p2})` : "Semifinalele se completează automat când ambele grupe au clasament final.";
+    box.append(p);
+  }
+
+  function renderRemaining() {
+    const list = T.remainingMatches(state);
+    $("remaining").innerHTML = list.length
+      ? `<ul class="remaining">${list.map((m) => `<li><strong>${m.stage}${m.n ? " · M" + m.n : ""}</strong>: ${m.a ? escapeHtml(m.a.name) : "?"} vs ${m.b ? escapeHtml(m.b.name) : "?"}</li>`).join("")}</ul>`
+      : `<p class="note">Toate meciurile au fost jucate. 🎉</p>`;
+  }
+
+  function render() {
+    $("clubName").value = state.clubName;
+    $("title").value = state.title;
+    renderTeams(); renderGroupMatches(); renderStandings(); renderKnockout(); renderRemaining();
+  }
+
+  $("clubName").addEventListener("change", (e) => { state.clubName = e.target.value.trim() || "Club"; commit(); });
+  $("title").addEventListener("change", (e) => { state.title = e.target.value.trim() || "Turneu"; commit(); });
+
+  $("resetScores").onclick = () => {
+    if (!confirm("Ștergi toate scorurile și ordinea manuală? Echipele rămân.")) return;
+    const fresh = T.defaultState();
+    state.matches = fresh.matches; state.manualOrder = fresh.manualOrder; state.semis = fresh.semis; state.final = fresh.final;
+    commit(); render();
+  };
+  $("resetAll").onclick = () => {
+    if (!confirm("Resetezi complet turneul (echipe, jucători, scoruri)?")) return;
+    state = T.defaultState(); commit(); render();
+  };
+
+  live = connectLive(onServerState, (online) => {
+    const el = $("status");
+    el.textContent = online ? "Conectat · sincronizare live" : "Fără conexiune la server";
+    el.className = "status" + (online ? "" : " err");
+  });
+</script>
+</body>
+</html>
