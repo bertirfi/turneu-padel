@@ -10,6 +10,9 @@ Ecranul TV se actualizeaza singur la fiecare 2 secunde; administrarea se face de
 | Ecran TV (afisare) | `https://turneu-padel.vercel.app/` |
 | Administrare (laptop) | `https://turneu-padel.vercel.app/admin` |
 
+**Parola de administrare:** pagina `/admin` cere la prima deschidere parola din variabila de mediu `ADMIN_PASSWORD`
+(setata in Vercel; local in `.env.local`). Browserul o tine minte. Fara variabila (rulare locala), nu se cere parola.
+
 **Pe televizor:** deschide adresa TV in browserul televizorului (sau pe un laptop / Chromecast / Fire Stick legat prin HDMI)
 si pune pagina pe ecran complet (`F11`). Nu e nevoie de screen share.
 
