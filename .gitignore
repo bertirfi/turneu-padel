@@ -5,3 +5,5 @@ data/
 
 .vercel
 .env*
+.agents/
+.claude/skills/
