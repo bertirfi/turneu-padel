@@ -6,6 +6,7 @@ const fs = require("fs");
 const path = require("path");
 const os = require("os");
 const apiState = require("./api/state");
+const apiAuth = require("./api/auth");
 
 const PORT = Number(process.env.PORT) || 3000;
 const PUBLIC_DIR = path.join(__dirname, "public");
@@ -15,6 +16,7 @@ http
   .createServer((req, res) => {
     const url = new URL(req.url, "http://x");
     if (url.pathname === "/api/state") return apiState(req, res);
+    if (url.pathname === "/api/auth") return apiAuth(req, res);
     // cleanUrls ca pe Vercel: "/" -> index.html, "/admin" -> admin.html
     let rel = url.pathname === "/" ? "index.html" : url.pathname.slice(1);
     if (!path.extname(rel)) rel += ".html";

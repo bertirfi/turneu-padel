@@ -22,12 +22,36 @@ function connectLive(onState, onStatus, intervalMs = 2000) {
   return { refresh: tick, stop: () => clearInterval(timer) };
 }
 
+// Parola de administrare: ceruta o singura data, tinuta in browser.
+const ADMIN_KEY = "adminPassword";
+function adminHeaders() {
+  let pw = null;
+  try { pw = localStorage.getItem(ADMIN_KEY); } catch {}
+  return pw ? { "x-admin-password": pw } : {};
+}
+
+async function ensureAdminPassword() {
+  for (;;) {
+    const res = await fetch("/api/auth", { headers: adminHeaders(), cache: "no-store" });
+    if (res.ok) return;
+    if (res.status !== 401) throw new Error(`Eroare ${res.status}`);
+    const pw = prompt("Parola de administrare:");
+    if (pw === null) throw new Error("Fără parolă nu se pot salva modificări.");
+    try { localStorage.setItem(ADMIN_KEY, pw); } catch {}
+  }
+}
+
 async function saveState(state) {
   const res = await fetch("/api/state", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...adminHeaders() },
     body: JSON.stringify(state),
   });
+  if (res.status === 401) {
+    try { localStorage.removeItem(ADMIN_KEY); } catch {}
+    await ensureAdminPassword();
+    return saveState(state);
+  }
   const body = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(body.error || `Eroare ${res.status}`);
   return body;

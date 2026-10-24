@@ -1,6 +1,7 @@
 // GET  /api/state -> starea curenta a turneului
 // POST /api/state -> inlocuieste starea (validata). Folosit atat de Vercel cat si de server.js.
 const storage = require("../lib/storage");
+const { isAuthorized } = require("../lib/auth");
 const { defaultState, validateState } = require("../public/tournament");
 
 function json(res, status, body) {
@@ -30,6 +31,7 @@ module.exports = async function handler(req, res) {
       return json(res, 200, state);
     }
     if (req.method === "POST") {
+      if (!isAuthorized(req)) return json(res, 401, { error: "Parolă greșită" });
       let body = await readBody(req);
       if (typeof body === "string") body = JSON.parse(body);
       const error = validateState(body);

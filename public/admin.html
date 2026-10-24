@@ -290,6 +290,7 @@
     el.textContent = online ? "Conectat · sincronizare live" : "Fără conexiune la server";
     el.className = "status" + (online ? "" : " err");
   });
+  ensureAdminPassword().catch((e) => toast(e.message, true));
 </script>
 </body>
 </html>
